@@ -1,0 +1,38 @@
+{
+  "name": "sess",
+  "version": "0.0.0",
+  "description": "easy session middleware",
+  "main": "index.js",
+  "dependencies": {
+    "cookies": "~0.3.6"
+  },
+  "devDependencies": {
+    "mocha": "*",
+    "modeler": "~0.4.1",
+    "middler": "~0.6.1",
+    "formidable": "~1.0.14",
+    "request": "~2.22.0",
+    "expres": "0.0.4"
+  },
+  "scripts": {
+    "test": "make test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/carlos8f/sess.git"
+  },
+  "homepage": "https://github.com/carlos8f/sess",
+  "keywords": [
+    "connect",
+    "express",
+    "middleware",
+    "session"
+  ],
+  "author": "Carlos Rodriguez <carlos@s8f.org> (http://s8f.org/)",
+  "license": "MIT",
+  "readmeFilename": "README.md",
+  "gitHead": "cffad06d55eb60a86b3592a100ed713260292e5e",
+  "bugs": {
+    "url": "https://github.com/carlos8f/sess/issues"
+  }
+}
