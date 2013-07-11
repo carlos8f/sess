@@ -1,7 +1,6 @@
 var cookie = require('cookie')
   , modeler = require('modeler')
   , idgen = require('idgen')
-  , pause = require('pause')
 
 module.exports = function (_opts) {
   _opts || (_opts = {});
@@ -13,12 +12,6 @@ module.exports = function (_opts) {
   options.cookie.name || (options.cookie.name = 'sess');
 
   return function (req, res, next) {
-    var paused = pause(req);
-    req.resume = function () {
-      // note: avoid bind() per-request because it's really slow!
-      paused.resume();
-    };
-
     if (!req.headers['cookie']) return create();
     var cookies = cookie.parse(req.headers['cookie']);
     if (!cookies || !cookies[options.cookie.name]) return create();

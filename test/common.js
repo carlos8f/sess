@@ -14,7 +14,6 @@ basicTest = function (options) {
     before(function (done) {
       server = require('http').createServer();
       middler(server)
-        .first(sess(options))
         .first(['post', 'put'], function bodyParser (req, res, next) {
           var buf = '';
           req.on('data', function (data) {
@@ -32,6 +31,7 @@ basicTest = function (options) {
           });
           req.resume();
         })
+        .first(sess(options))
         .first(expres.middleware)
         .post('/session', function (req, res, next) {
           Object.keys(req.body).forEach(function (k) {
