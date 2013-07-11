@@ -5,7 +5,7 @@ var cookie = require('cookie')
 
 module.exports = function (_opts) {
   _opts || (_opts = {});
-  var coll = _opts.collection || modeler(_opts);
+  var coll = _opts.sessions || modeler(_opts);
 
   var options = coll.copy(_opts);
   options.cookie = coll.copy(_opts.cookie || {});
@@ -78,7 +78,8 @@ module.exports = function (_opts) {
       // proxy res.writeHead() to set cookie
       var _writeHead = res.writeHead;
       res.writeHead = function () {
-        // session was just saved for the first time? (account for rev of 0 or 1)
+        // session was just saved for the first time?
+        // account for writeHead() called before end()
         if (req.session && req.session.rev < 2) {
           // @todo: refuse to set header options.secure and proto != 'https'
           res.setHeader('Set-Cookie', cookie.serialize(options.cookie.name, req.session.id, options.cookie));
