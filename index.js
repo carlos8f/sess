@@ -40,7 +40,7 @@ module.exports = function (_opts) {
     function set (session) {
       req.session = session;
       req.sessionID = req.session.id;
-      // expose some stuff on session, also some basic connect compatibility
+      // expose some stuff on session, also some connect compatibility
       req.session.__proto__ = {
         req: req,
         res: res,
@@ -50,6 +50,7 @@ module.exports = function (_opts) {
             if (err && !cb) return res.emit('error', err);
             cb && cb(err);
           });
+          return this;
         },
         destroy: function (cb) {
           coll.destroy(req.session.id, function (err) {
@@ -60,10 +61,12 @@ module.exports = function (_opts) {
             }
             cb && cb(err);
           });
+          return this;
         },
         touch: function () {
           // set-cookie again
           touch = true;
+          return this;
         },
         reload: function (cb) {
           coll.load(req.session.id, function (err, session) {
@@ -75,6 +78,7 @@ module.exports = function (_opts) {
             }
             cb && cb(err);
           });
+          return this;
         },
         regenerate: function (cb) {
           req.session.destroy(function (err) {
@@ -82,6 +86,7 @@ module.exports = function (_opts) {
             if (!err) generate();
             cb && cb(err);
           });
+          return this;
         }
       };
     }
