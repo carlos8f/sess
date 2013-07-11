@@ -8,7 +8,7 @@ basicTest = function (options) {
   return function () {
     var server, base, currentId;
     before(function (done) {
-      var server = require('../example/basic');
+      var server = require('../example/basic')(options);
       server.listen(0, function () {
         base = 'http://localhost:' + server.address().port;
         done();
