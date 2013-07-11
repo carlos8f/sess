@@ -1,15 +1,15 @@
 describe('basic test', function () {
-  var server, port;
+  var server, base, currentId;
   before(function (done) {
     server = require('http').createServer();
     middler(server)
-      .first(expres.middleware)
+      .first(sess())
       .first(['post', 'put'], function bodyParser (req, res, next) {
         var buf = '';
-        res.on('data', function (data) {
+        req.on('data', function (data) {
           buf += data;
         });
-        res.once('end', function () {
+        req.once('end', function () {
           try {
             var body = JSON.parse(buf);
           }
@@ -19,8 +19,9 @@ describe('basic test', function () {
           req.body = body;
           next();
         });
+        req.resume();
       })
-      .first(sess())
+      .first(expres.middleware)
       .post('/session', function (req, res, next) {
         Object.keys(req.body).forEach(function (k) {
           req.session[k] = req.body[k];
@@ -41,16 +42,47 @@ describe('basic test', function () {
       });
 
     server.listen(0, function () {
-      port = server.address().port;
+      base = 'http://localhost:' + server.address().port;
       done();
     });
   });
   it('has session', function (done) {
-    request({uri: 'http://localhost:' + port + '/session', json: true}, function (err, resp, body) {
-      if (err) return done(err);
+    request({uri: base + '/session', json: true}, function (err, resp, body) {
+      assert.ifError(err);
       assert.equal(resp.statusCode, 200);
       assert(body.id);
+      currentId = body.id;
       assert(body.created);
+      done();
+    });
+  });
+  it('is persistent', function (done) {
+    request({uri: base + '/session', json: true}, function (err, resp, body) {
+      assert.ifError(err);
+      assert.equal(resp.statusCode, 200);
+      assert(body.id);
+      assert.equal(body.id, currentId);
+      assert(body.created);
+      done();
+    });
+  });
+  it('sets session', function (done) {
+    var vars = {a: 'ok', its: {working: true}, ok: 1};
+    request({uri: base + '/session', method: 'post', json: true, body: vars}, function (err, resp, body) {
+      assert.ifError(err);
+      assert.equal(resp.statusCode, 200);
+      done();
+    });
+  });
+  it('is persistent', function (done) {
+    request({uri: base + '/session', json: true}, function (err, resp, body) {
+      assert.ifError(err);
+      assert.equal(resp.statusCode, 200);
+      assert(body.id);
+      assert.equal(body.id, currentId);
+      assert.equal(body.a, 'ok');
+      assert.deepEqual(body.its, {working: true});
+      assert.strictEqual(body.ok, 1);
       done();
     });
   });

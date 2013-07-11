@@ -15,42 +15,20 @@ module.exports = function (_opts) {
   coll.options.create = function (session) {
     // additional id entropy because session ids are supposed to be secret
     if (!session.rev) session.id = idgen(32);
-    if (!session.req) throw new Error('session.req is required');
-    if (!session.res) throw new Error('session.res is required');
-    // move req and res to __proto__, essentially hiding these properties
-    session.__proto__ = {};
-    ['req', 'res'].forEach(function (k) {
-      session.__proto__[k] = session[k];
-      delete session[k];
-    });
-    // proxy res.writeHead() to set cookie
-    var _writeHead = session.res.writeHead;
-    session.res.writeHead = function () {
-      if (session && session.req && session.req.session) {
-        // @todo: refuse to set header options.secure and proto != 'https'
-        session.res.setHeader('Set-Cookie', cookie.serialize(options.cookie.name, session.id, options.cookie));
-      }
-      _writeHead.apply(session.res, [].slice.call(arguments));
-    };
-    // proxy res.end() to save session
-    var _end = session.res.end;
-    session.res.end = function () {
-      var args = [].slice.call(arguments);
-      // @todo: check hash if session changed?
-      coll.save(session, function (err) {
-        if (err) return session.res.emit('error', err);
-        _end.apply(session.res, args);
-      });
-    };
   };
 
   return function (req, res, next) {
     var paused = pause(req);
+    req.resume = function () {
+      // note: avoid bind() per-request because it's really slow!
+      paused.resume();
+    };
 
     if (!req.headers['cookie']) return create();
     var cookies = cookie.parse(req.headers['cookie']);
     if (!cookies || !cookies[options.cookie.name]) return create();
 
+    // attempt to load based on cookie's id
     coll.load(cookies[options.cookie.name], function (err, session) {
       if (err) return next(err);
       if (!session) return create();
@@ -59,14 +37,30 @@ module.exports = function (_opts) {
     });
 
     function create () {
-      req.session = coll.create({req: req, res: res});
+      req.session = coll.create();
       doNext();
     }
 
     function doNext () {
-      process.nextTick(function () {
-        paused.resume();
-      });
+      // proxy res.writeHead() to set cookie
+      var _writeHead = res.writeHead;
+      res.writeHead = function () {
+        if (req.session) {
+          // @todo: refuse to set header options.secure and proto != 'https'
+          res.setHeader('Set-Cookie', cookie.serialize(options.cookie.name, req.session.id, options.cookie));
+        }
+        _writeHead.apply(res, [].slice.call(arguments));
+      };
+      // proxy res.end() to save session
+      var _end = res.end;
+      res.end = function () {
+        var args = [].slice.call(arguments);
+        // @todo: check hash if session changed?
+        coll.save(req.session, function (err) {
+          if (err) return res.emit('error', err);
+          _end.apply(res, args);
+        });
+      };
       next();
     }
   };
