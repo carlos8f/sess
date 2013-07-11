@@ -9,9 +9,11 @@ module.exports = function (_opts) {
   var options = coll.copy(_opts);
   options.cookie = coll.copy(_opts.cookie || {});
   if (typeof options.cookie.httpOnly === 'undefined') options.cookie.httpOnly = true;
-  options.cookie.name || (options.cookie.name = 'sess');
+  options.cookie.name || (options.cookie.name = options.key || 'sess');
 
   return function (req, res, next) {
+    var touch = false;
+
     if (!req.headers['cookie']) return create();
     var cookies = cookie.parse(req.headers['cookie']);
     if (!cookies || !cookies[options.cookie.name]) return create();
@@ -20,8 +22,7 @@ module.exports = function (_opts) {
     coll.load(cookies[options.cookie.name], function (err, session) {
       if (err) return next(err);
       if (!session) return create();
-      req.session = session;
-      req.sessionID = req.session.id;
+      set(session);
       doNext();
     });
 
@@ -30,14 +31,15 @@ module.exports = function (_opts) {
       doNext();
     }
 
-    function generate () {
-      req.session = coll.create();
-      // additional id entropy because session ids are supposed to be secret
-      req.session.id = idgen(32);
-      req.sessionID = req.session.id;
+    function generate (id) {
+      var session = coll.create({id: id});
+      if (!id) session.id = idgen(32);
+      set(session);
     }
 
-    function doNext () {
+    function set (session) {
+      req.session = session;
+      req.sessionID = req.session.id;
       // expose some stuff on session, also some basic connect compatibility
       req.session.__proto__ = {
         req: req,
@@ -59,6 +61,21 @@ module.exports = function (_opts) {
             cb && cb(err);
           });
         },
+        touch: function () {
+          // set-cookie again
+          touch = true;
+        },
+        reload: function (cb) {
+          coll.load(req.session.id, function (err, session) {
+            if (err && !cb) return res.emit('error', err);
+            if (!err) {
+              if (session) set(session);
+              // create an empty session with the same id
+              else generate(req.session.id);
+            }
+            cb && cb(err);
+          });
+        },
         regenerate: function (cb) {
           req.session.destroy(function (err) {
             if (err && !cb) return res.emit('error', err);
@@ -67,26 +84,30 @@ module.exports = function (_opts) {
           });
         }
       };
+    }
 
+    function doNext () {
       // proxy res.writeHead() to set cookie
       var _writeHead = res.writeHead;
       res.writeHead = function () {
+        res.writeHead = _writeHead;
         // session was just saved for the first time?
         // account for writeHead() called before end()
-        if (req.session && req.session.rev < 2) {
+        if (req.session && (req.session.rev < 2 || touch || options.cookie.alwaysSet)) {
           // @todo: refuse to set header options.secure and proto != 'https'
           res.setHeader('Set-Cookie', cookie.serialize(options.cookie.name, req.session.id, options.cookie));
         }
-        _writeHead.apply(res, [].slice.call(arguments));
+        res.writeHead.apply(res, [].slice.call(arguments));
       };
       // proxy res.end() to save session
       var _end = res.end;
       res.end = function () {
+        res.end = _end;
         var args = [].slice.call(arguments);
-        if (!req.session) return _end.apply(res, args);
+        if (!req.session) return res.end.apply(res, args);
         req.session.save(function (err) {
           if (err) return res.emit('error', err);
-          _end.apply(res, args);
+          res.end.apply(res, args);
         });
       };
       next();
