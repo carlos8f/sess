@@ -12,11 +12,6 @@ module.exports = function (_opts) {
   if (typeof options.cookie.httpOnly === 'undefined') options.cookie.httpOnly = true;
   options.cookie.name || (options.cookie.name = 'sess');
 
-  coll.options.create = function (session) {
-    // additional id entropy because session ids are supposed to be secret
-    session.id = idgen(32);
-  };
-
   return function (req, res, next) {
     var paused = pause(req);
     req.resume = function () {
@@ -44,6 +39,8 @@ module.exports = function (_opts) {
 
     function generate () {
       req.session = coll.create();
+      // additional id entropy because session ids are supposed to be secret
+      req.session.id = idgen(32);
       req.sessionID = req.session.id;
     }
 
