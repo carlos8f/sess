@@ -33,19 +33,56 @@ module.exports = function (_opts) {
       if (err) return next(err);
       if (!session) return create();
       req.session = session;
+      req.sessionID = req.session.id;
       doNext();
     });
 
     function create () {
-      req.session = coll.create();
+      generate();
       doNext();
     }
 
+    function generate () {
+      req.session = coll.create();
+      req.sessionID = req.session.id;
+    }
+
     function doNext () {
+      // expose some stuff on session, also some basic connect compatibility
+      req.session.__proto__ = {
+        req: req,
+        res: res,
+        save: function (cb) {
+          // @todo: check hash if session changed?
+          coll.save(req.session, function (err) {
+            if (err && !cb) return res.emit('error', err);
+            cb && cb(err);
+          });
+        },
+        destroy: function (cb) {
+          coll.destroy(req.session.id, function (err) {
+            if (err && !cb) return res.emit('error', err);
+            if (!err) {
+              delete req.session;
+              delete req.sessionID;
+            }
+            cb && cb(err);
+          });
+        },
+        regenerate: function (cb) {
+          req.session.destroy(function (err) {
+            if (err && !cb) return res.emit('error', err);
+            if (!err) generate();
+            cb && cb(err);
+          });
+        }
+      };
+
       // proxy res.writeHead() to set cookie
       var _writeHead = res.writeHead;
       res.writeHead = function () {
-        if (req.session) {
+        // session was just saved for the first time? (account for rev of 0 or 1)
+        if (req.session && req.session.rev < 2) {
           // @todo: refuse to set header options.secure and proto != 'https'
           res.setHeader('Set-Cookie', cookie.serialize(options.cookie.name, req.session.id, options.cookie));
         }
@@ -55,8 +92,8 @@ module.exports = function (_opts) {
       var _end = res.end;
       res.end = function () {
         var args = [].slice.call(arguments);
-        // @todo: check hash if session changed?
-        coll.save(req.session, function (err) {
+        if (!req.session) return _end.apply(res, args);
+        req.session.save(function (err) {
           if (err) return res.emit('error', err);
           _end.apply(res, args);
         });
