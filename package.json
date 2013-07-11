@@ -1,7 +1,7 @@
 {
   "name": "sess",
   "version": "0.0.0",
-  "description": "easy session middleware",
+  "description": "connect/express-style session middleware for apps that don't use connect/express",
   "main": "index.js",
   "dependencies": {
     "cookie": "~0.1.0",
