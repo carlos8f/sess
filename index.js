@@ -14,7 +14,7 @@ module.exports = function (_opts) {
 
   coll.options.create = function (session) {
     // additional id entropy because session ids are supposed to be secret
-    if (!session.rev) session.id = idgen(32);
+    session.id = idgen(32);
   };
 
   return function (req, res, next) {
