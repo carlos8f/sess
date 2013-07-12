@@ -11,7 +11,7 @@ var sessions = modeler({
 });
 
 // pass that to sess
-var sess = require('sess')({
+var sess = require('../')({
   sessions: sessions
 });
 

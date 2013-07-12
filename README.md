@@ -37,8 +37,8 @@ middler(server)
 `sess()` can be passed these options:
 
 - `key` (String, default: `sess`) - cookie name (can also be passed as `options.cookie.name`)
-- `cookie` (Object, default: `{httpOnly: true}`) - options to pass to [cookie](https://npmjs.org/package/cookie),
-  and additionally supported are:
+- `cookie` (Object, default: `{httpOnly: true, path: '/'}`) - options to pass to
+  [cookie](https://npmjs.org/package/cookie), and additionally supported are:
       - `alwaysSet` (Boolean, default: `false`) - always issue `Set-Cookie` header
 - `sessions` ([modeler](https://github.com/carlos8f/modeler) collection, default: memory store) -
   pass a modeler collection to achieve persistence or clustering (see redis example

@@ -10,6 +10,7 @@ module.exports = function (_opts) {
   options.cookie = coll.copy(_opts.cookie || {});
   if (typeof options.cookie.httpOnly === 'undefined') options.cookie.httpOnly = true;
   options.cookie.name || (options.cookie.name = options.key || 'sess');
+  options.cookie.path || (options.cookie.path = '/');
 
   return function (req, res, next) {
     var touch = false;
