@@ -6,7 +6,8 @@
   "dependencies": {
     "cookie": "~0.1.0",
     "modeler": "~0.4.1",
-    "idgen": "~1.3.0"
+    "idgen": "~1.3.0",
+    "sig": "~0.1.0"
   },
   "devDependencies": {
     "mocha": "*",

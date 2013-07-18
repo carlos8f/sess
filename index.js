@@ -1,6 +1,7 @@
 var cookie = require('cookie')
   , modeler = require('modeler')
   , idgen = require('idgen')
+  , sig = require('sig')
 
 module.exports = function (_opts) {
   _opts || (_opts = {});
@@ -13,7 +14,7 @@ module.exports = function (_opts) {
   options.cookie.path || (options.cookie.path = '/');
 
   return function (req, res, next) {
-    var touch = false;
+    var touch = false, hash;
 
     if (!req.headers['cookie']) return create();
     var cookies = cookie.parse(req.headers['cookie']);
@@ -41,16 +42,23 @@ module.exports = function (_opts) {
     function set (session) {
       req.session = session;
       req.sessionID = req.session.id;
+      hash = sig(req.session);
       // expose some stuff on session, also some connect compatibility
       req.session.__proto__ = {
         req: req,
         res: res,
         save: function (cb) {
-          // @todo: check hash if session changed?
-          coll.save(req.session, function (err) {
-            if (err && !cb) return res.emit('error', err);
-            cb && cb(err);
-          });
+          // check signature for changes
+          if (sig(req.session) !== hash) {
+            coll.save(req.session, function (err) {
+              // if another request saved the session first, defer
+              if (err && err.code === 'REV_CONFLICT') return cb && cb();
+              if (err && !cb) return res.emit('error', err);
+              cb && cb(err);
+            });
+          }
+          // no changes, just return
+          else cb && cb();
           return this;
         },
         destroy: function (cb) {
@@ -99,7 +107,7 @@ module.exports = function (_opts) {
         res.writeHead = _writeHead;
         // session was just saved for the first time?
         // account for writeHead() called before end()
-        if (req.session && (req.session.rev < 2 || touch || options.cookie.alwaysSet)) {
+        if (req.session && ((sig(req.session) !== hash && req.session.rev < 2) || touch || options.cookie.alwaysSet)) {
           // @todo: refuse to set header options.secure and proto != 'https'
           res.setHeader('Set-Cookie', cookie.serialize(options.cookie.name, req.session.id, options.cookie));
         }
