@@ -21,7 +21,6 @@ basicTest = function (options) {
         assert(!resp.headers['set-cookie']);
         assert(body.id);
         currentId = body.id;
-        assert(body.created);
         done();
       });
     });
@@ -43,7 +42,6 @@ basicTest = function (options) {
         assert(!resp.headers['set-cookie']);
         assert(body.id);
         assert.equal(body.id, currentId);
-        assert(body.created);
         done();
       });
     });

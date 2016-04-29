@@ -1,31 +1,31 @@
 {
-  "name": "sess",
+  "name": "sosa_session",
   "version": "0.1.4",
   "description": "connect/express-style session middleware for apps that don't use connect/express",
   "main": "index.js",
   "dependencies": {
-    "cookie": "~0.1.0",
-    "modeler": "~0.4.1",
-    "idgen": "~1.3.0",
-    "href": "~0.1.1",
-    "sig": "~1.0.0"
+    "cookie": "^0.1.5",
+    "href": "^0.1.1",
+    "idgen": "^1.3.0",
+    "sig": "^1.0.0",
+    "sosa_mem": "^0.2.1"
   },
   "devDependencies": {
-    "mocha": "*",
-    "middler": "~0.6.1",
-    "request": "~2.22.0",
     "expres": "0.0.4",
-    "redis": "~0.8.4",
-    "modeler-redis": "~0.3.1"
+    "middler": "^0.6.1",
+    "mocha": "^2.4.5",
+    "redis": "^2.6.0-1",
+    "request": "^2.22.0",
+    "sosa_redis": "^0.1.1"
   },
   "scripts": {
     "test": "make test"
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/carlos8f/sess.git"
+    "url": "git://github.com/carlos8f/sosa_session.git"
   },
-  "homepage": "https://github.com/carlos8f/sess",
+  "homepage": "https://github.com/carlos8f/sosa_session",
   "keywords": [
     "connect",
     "express",
@@ -34,9 +34,7 @@
   ],
   "author": "Carlos Rodriguez <carlos@s8f.org> (http://s8f.org/)",
   "license": "MIT",
-  "readmeFilename": "README.md",
-  "gitHead": "cffad06d55eb60a86b3592a100ed713260292e5e",
   "bugs": {
-    "url": "https://github.com/carlos8f/sess/issues"
+    "url": "https://github.com/carlos8f/sosa_session/issues"
   }
 }

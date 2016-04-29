@@ -1,15 +1,26 @@
 var cookie = require('cookie')
-  , modeler = require('modeler')
+  , sosa_mem = require('sosa_mem')
   , idgen = require('idgen')
   , sig = require('sig')
   , href = require('href')
 
+function PlainObject() {}
+PlainObject.prototype = Object.create(null);
+
+function shallowCopy (obj) {
+  var ret = new PlainObject();
+  Object.keys(obj || {}).forEach(function (k) {
+    ret[k] = obj[k];
+  });
+  return ret;
+}
+
 module.exports = function (_opts) {
   _opts || (_opts = {});
-  var coll = _opts.sessions || modeler(_opts);
+  var coll = _opts.sessions || sosa_mem({prefix: _opts.key || 'sess'})('sessions', _opts);
 
-  var options = coll.copy(_opts);
-  options.cookie = coll.copy(_opts.cookie || {});
+  var options = shallowCopy(_opts);
+  options.cookie = shallowCopy(_opts.cookie || {});
   if (typeof options.cookie.httpOnly === 'undefined') options.cookie.httpOnly = true;
   options.cookie.name || (options.cookie.name = options.key || 'sess');
   options.cookie.path || (options.cookie.path = '/');
@@ -38,7 +49,7 @@ module.exports = function (_opts) {
       }
 
       function generate (id) {
-        var session = coll.create({id: id});
+        var session = {id: id, rev: 0};
         if (!id) session.id = idgen(32);
         set(session);
       }
@@ -54,7 +65,8 @@ module.exports = function (_opts) {
           save: function (cb) {
             // check signature for changes
             if ((!options.cookie.secure || req.href.protocol === 'https:') && sig(req.session) !== hash) {
-              coll.save(req.session, function (err) {
+              req.session.rev++;
+              coll.save(req.session.id, req.session, function (err) {
                 // if another request saved the session first, defer
                 if (err && err.code === 'REV_CONFLICT') return cb && cb();
                 if (err && !cb) return res.emit('error', err);
