@@ -19,7 +19,6 @@ curl localhost:3000
 
 {
   "id": "NM53IkH8lbzfUfVLKr7sz9n6knRlUqjz",
-  "created": "2013-07-11T20:46:14.385Z",
   "rev": 0
 }
 
@@ -33,9 +32,7 @@ curl -X POST -H 'Cookie: sess=NM53IkH8lbzfUfVLKr7sz9n6knRlUqjz' -d '{"mykey":"my
 
 {
   "id": "NM53IkH8lbzfUfVLKr7sz9n6knRlUqjz",
-  "created": "2013-07-11T20:46:09.367Z",
   "rev": 1,
-  "updated": "2013-07-11T20:48:12.366Z",
   "mykey": "myvalue"
 }
 
@@ -49,9 +46,7 @@ curl -H 'Cookie: sess=NM53IkH8lbzfUfVLKr7sz9n6knRlUqjz' localhost:3000
 
 {
   "id": "NM53IkH8lbzfUfVLKr7sz9n6knRlUqjz",
-  "created": "2013-07-11T20:46:09.367Z",
   "rev": 2,
-  "updated": "2013-07-11T20:48:25.518Z",
   "mykey": "myvalue"
 }
 

@@ -17,15 +17,15 @@ function shallowCopy (obj) {
 
 module.exports = function (_opts) {
   _opts || (_opts = {});
-  var coll = _opts.sessions || sosa_mem({prefix: _opts.key || 'sess'})('sessions', _opts);
+  var coll = _opts.sessions || sosa_mem({prefix: _opts.key || 'sosa_session'})('sessions', _opts);
 
   var options = shallowCopy(_opts);
   options.cookie = shallowCopy(_opts.cookie || {});
   if (typeof options.cookie.httpOnly === 'undefined') options.cookie.httpOnly = true;
-  options.cookie.name || (options.cookie.name = options.key || 'sess');
+  options.cookie.name || (options.cookie.name = options.key || 'sosa_session');
   options.cookie.path || (options.cookie.path = '/');
 
-  return function sess (req, res, next) {
+  return function sosa_session (req, res, next) {
     href(req, res, function (err) {
       if (err) return next(err);
 

@@ -1,4 +1,4 @@
-var sess = require('../')
+var sosa_session = require('../')
   , middler = require('middler')
   , expres = require('expres')
 
@@ -23,7 +23,7 @@ module.exports = function (options) {
       });
       req.resume();
     })
-    .first(sess(options)) // here's the session middleware
+    .first(sosa_session(options)) // here's the session middleware
     .first(expres.middleware)
     .get(['/', '/session'], function (req, res, next) {
       res.json(req.session);

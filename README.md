@@ -1,19 +1,17 @@
-sess
-====
+sosa_session
+============
 
 connect/express-style session middleware for apps that don't use connect/express
 
-[![build status](https://secure.travis-ci.org/carlos8f/sess.png)](http://travis-ci.org/carlos8f/sess)
-
 ## Pluggable storage
 
-`sess` uses a memory store out of the box. It has limitations:
+`sosa_session` uses a memory store out of the box. It has limitations:
 
 - not persistent through web server restarts
 - if you run multiple web servers, each server will have its own set of sessions
 (which might be fine if you have "sticky" sessions configured on your load balancer)
 
-However pluggable storage is supported through [modeler](https://github.com/carlos8f/modeler)
+However pluggable storage is supported through [sosa](https://github.com/carlos8f/sosa)
 so you might want to use that for production. See example below for using redis
 as a store.
 
@@ -22,10 +20,12 @@ as a store.
 ```js
 var middler = require('middler')
   , server = require('http').createServer()
-  , sess = require('sess')
 
+var sosa_session = require('sosa_session')();
+
+// use as middleware
 middler(server)
-  .add(sess())
+  .add(sosa_session)
   .add(function (req, res, next) {
     // req.session now available
     // also req.sessionID
@@ -36,12 +36,12 @@ middler(server)
 
 `sess()` can be passed these options:
 
-- `key` (String, default: `sess`) - cookie name (can also be passed as `options.cookie.name`)
+- `key` (String, default: `sosa_session`) - cookie name (can also be passed as `options.cookie.name`)
 - `cookie` (Object, default: `{httpOnly: true, path: '/'}`) - options to pass to
   [cookie](https://npmjs.org/package/cookie), and additionally supported are:
       - `alwaysSet` (Boolean, default: `false`) - always issue `Set-Cookie` header
-- `sessions` ([modeler](https://github.com/carlos8f/modeler) collection, default: memory store) -
-  pass a modeler collection to achieve persistence or clustering (see redis example
+- `sessions` ([sosa](https://github.com/carlos8f/sosa) collection, default: memory store) -
+  pass a sosa collection to achieve persistence or clustering (see redis example
   below)
 
 ## connect/express compatibility
@@ -52,36 +52,35 @@ the middleware stack. _Disclaimer: I haven't tested the compatibility very thoro
 
 ## Using redis as a store
 
-`sess` uses a [modeler](https://github.com/carlos8f/modeler) collection to store
-sessions, which can be passed with `options.sessions`. Any modeler store, such
-as [modeler-redis](https://github.com/carlos8f/modeler-redis) can be used to
+`sosa_session` uses a [sosa](https://github.com/carlos8f/sosa) collection to store
+sessions, which can be passed with `options.sessions`. Any sosa store, such
+as [sosa_redis](https://github.com/carlos8f/sosa_redis) can be used to
 store sessions:
 
 ```js
-var modeler = require('modeler-redis')
-  , client = require('redis').createClient()
+var client = require('redis').createClient()
   , middler = require('middler')
   , server = require('http').createServer()
 
 // create a modeler-redis collection for sessions
-var sessions = modeler({
-  name: 'sessions',
-  prefix: 'myapp:',
-  client: client
-});
+var sessions = require('sosa_redis')({
+  client: client,
+  prefix: 'myapp'
+})('sessions');
 
-// pass that to sess
-var sess = require('sess')({
+// pass that to sosa_session
+var sosa_session = require('sosa_session')({
   sessions: sessions
 });
 
 // use as middleware
 middler(server)
-  .add(sess)
+  .add(sosa_session)
   .add(function (req, res, next) {
     // req.session now available
     // also req.sessionID
   })
+
 ```
 
 - - -
@@ -94,8 +93,8 @@ strategy firm located in Aptos, CA and Washington, D.C.
 
 ### License: MIT
 
-- Copyright (C) 2013 Carlos Rodriguez (http://s8f.org/)
-- Copyright (C) 2013 Terra Eclipse, Inc. (http://www.terraeclipse.com/)
+- Copyright (C) 2016 Carlos Rodriguez (http://s8f.org/)
+- Copyright (C) 2016 Terra Eclipse, Inc. (http://www.terraeclipse.com/)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the &quot;Software&quot;), to deal
